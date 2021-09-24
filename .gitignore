@@ -1,0 +1,11 @@
+/vendor
+/node_modules
+.env
+.env.backup
+Homestead.json
+Homestead.yaml
+npm-debug.log
+yarn-error.log
+.gitlab-ci.yml
+/public/reports/
+/public/images/
