@@ -264,6 +264,10 @@ class CountrySeeder extends Seeder
             array(245, 'ZM', 'Zambia'),
             array(246, 'ZW', 'Zimbabwe')
         );
+        /**
+         * Borrar los existentes
+         */
+        DB::table('country')->truncate();
           // Cargar los registros
         foreach ($items as $values => $key){
             $r = $values == 0 ? $values+1 :($values+1);
