@@ -20,7 +20,10 @@ Route::post('register', [PassportAuthController::class, 'register']);   //  Meto
 Route::post('login', [PassportAuthController::class, 'login']); // Metodo para Iniciar Sesion
 
 //Route::get('users', [UserController::class,'index']);
-Route::resource('users', UserController::class);
+Route::middleware('auth:api')->group(function () {
+    Route::resource('users', UserController::class);
+});
+
 
 // Route::middleware('auth:api')->group(function () {
 //     //Route::post('logout', [PassportAuthController::class, 'logout']);
