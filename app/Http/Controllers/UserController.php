@@ -2,15 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Services\UserService as ServicesUserService;
 use Illuminate\Http\Request;
-use UserService;
 
 class UserController extends BaseController
 {
     public function __construct()
     {
         self::setTitle("Users ");
-        $this->service = new UserService(self::getTitle());
+        $this->service = new ServicesUserService(self::getTitle());
     }
 
     /**

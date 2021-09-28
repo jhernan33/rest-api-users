@@ -11,4 +11,8 @@ class Role extends Model
     protected $fillable = ['id','name'];
     protected $table = 'role';
     protected $hidden = ['created_at','updated_at','deleted_at'];
+
+    public function permissions(){
+        return $this->hasMany(RolePermission::class,'role_id','role_id');
+    }
 }

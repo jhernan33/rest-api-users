@@ -5,16 +5,17 @@ namespace App\Http\Services;
 
 use App\Http\Services\BaseService;
 use App\Models\User;
-use App\Models\UserRole as ModelsUserRole;
+use App\Models\UserRole;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use UserRole;
 
-class UserService extends BaseService{
+class PassportService extends BaseService{
     
     /**
-     * UserService constructor.
+     * PassportService constructor.
      * @param $Title
      */
     public function __construct($Title)
@@ -29,15 +30,10 @@ class UserService extends BaseService{
     {
         try {
             $pages = $request->has('pages') ? $request->pages : self::$pages;
-            $list = User::whereNull('deleted_at')
-                ->orderBy('full_name','asc')
+            return $list = User::whereNull('deleted_at')
+                ->orderBy('name','asc')
                 ->paginate($pages)
                 ;
-            if(count($list)>0){
-                return $list;
-            }else{
-                return $this->showMessage('Not Registered',404);
-            }
         } catch (Exception $e) {
             return self::showMessageObject('Error Not Registered',500,$e->getMessage());
         }
@@ -53,15 +49,9 @@ class UserService extends BaseService{
             $list = User::whereNull('deleted_at')
                 ->where('id','=',$id)
                 ->get()
-                //->toArray()
+                ->toArray()
             ;
             if(count($list)>0){
-                /**
-                 * Buscar el Detalle de Rol y sus Permisos
-                 */
-                foreach($list as &$value){
-                    $value->details = ModelsUserRole::whereNull('deleted_at')->with('roles')->get()->toArray();
-                }
                 return $list;
             }else{
                 return $this->showMessage('Not Registered',404);
@@ -77,34 +67,50 @@ class UserService extends BaseService{
      */
     public function store(Request $request)
     {
-        $array_save = [
-            'name' => self::convertText($request->name),
-            'code' => self::convertText($request->code),
-            'user_id' => $request->user_id,
-            'created_at' => $this->getStoreNow(),
-        ];
+        /**
+         * Validar si esta Registrado el Email y DNI
+         */
         $result_search = User::whereNull('deleted_at')
-            ->where('code','=',self::convertText($request->code))
-            ->where('name','=',self::convertText($request->name))
+            ->where('email','=',self::convertText($request->email))
+            ->where('dni','=',self::convertText($request->dni))
             ->get()
             ->toArray();
         if(count($result_search)>0){
-            return self::showMessageObject('Already Registered',200,$result_search);
+            return $this->showMessage('Already Registered',200);
         }else{
             //  Realizar el Insert
             try{
                 DB::beginTransaction();
-                $return = User::whereNull('deleted_at')
-                    ->where('code','=',self::convertText($request->code))
-                    ->where('name','=',self::convertText($request->name))
-                    ->insertGetId($array_save);
+                    /**
+                     * Crear el usuario
+                     */
+                    $user = User::create([
+                        'full_name' => $request->full_name,
+                        'email' => $request->email,
+                        'password' => bcrypt($request->password),
+                        'dni' => $request->dni,
+                    ]);
+
+                    /**
+                     * Validar el Rol si lo envian en el Request
+                     */
+                    $array_save_rol = [
+                        'role_id' => $request->has('rol_id') ? $request->rol_id: 2,
+                        'user_id' => $user->id,
+                        'created_at' => $this->getStoreNow(),
+                    ];
+
+                    UserRole::whereNull('deleted_at')
+                    ->where('rol_id','=',$request->rol_id)
+                    ->where('user_id','=',$request->name)
+                    ->insert($array_save_rol);
                 DB::commit();
-                $return = self::searchValueGeneral(User::class,$return);
-                return self::showMessageObject('created successfully',201,$return);
-            }catch (Exception $e){
-                DB::rollBack();
-                return self::showMessageObject('Error Not Registered',500,$e->getMessage());
-            }
+                    $token = $user->createToken('LaravelAuthApp')->accessToken;
+                    return response()->json(['token' => $token],200);
+                }catch (Exception $e){
+                    DB::rollBack();
+                    return self::showMessageObject('Error Not Registered',500,$e->getMessage());
+                }
         }
     }
 
@@ -163,6 +169,37 @@ class UserService extends BaseService{
         }else{
             return $this->showMessage('Id Not Registered',404);
         }
+    }
+
+    /**
+     * Metodo de Login
+     */
+    public function Login(Request $request){
+        $credentials = request(['email', 'password']);
+
+        if(!Auth::attempt($credentials))
+            return response()->json([
+                'message' => 'Unauthorized'
+            ], 401);
+
+        $user = $request->user();
+
+        $tokenResult = $user->createToken('Personal Access Token');
+        $token = $tokenResult->token;
+
+        if ($request->remember_me)
+            $token->expires_at = Carbon::now()->addWeeks(1);
+
+        $token->save();
+
+        return response()->json([
+            'access_token' => $tokenResult->accessToken,
+            'token_type' => 'Bearer',
+            'expires_at' => Carbon::parse(
+                $tokenResult->token->expires_at
+            )->toDateTimeString()
+        ]);
+
     }
 }
 ?>
