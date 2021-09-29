@@ -47,7 +47,7 @@ class BaseController extends Controller
     /**
      * @param $id
      */
-    public function destroy($id){
+    public function destroy($id, Request $request){
 
     }
 

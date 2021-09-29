@@ -19,20 +19,9 @@ use Illuminate\Support\Facades\Route;
 Route::post('register', [PassportAuthController::class, 'register']);   //  Metodo para Registrar
 Route::post('login', [PassportAuthController::class, 'login']); // Metodo para Iniciar Sesion
 
-//Route::get('users', [UserController::class,'index']);
+/**
+ * Endpoints Protegidos
+ */
 Route::middleware('auth:api')->group(function () {
     Route::resource('users', UserController::class);
 });
-
-
-// Route::middleware('auth:api')->group(function () {
-//     //Route::post('logout', [PassportAuthController::class, 'logout']);
-//     Route::resource('users', UserController::class);
-// });
-
-
-// Route::middleware('auth:api')->group(function () {
-//     //Route::resource('users', 'UserController',['only' => ['index','store','update','delete','show']]);
-//     Route::resource('users', UserController::class);
-//     //Route::get('logout', 'PassportAuthController@logout');
-// });

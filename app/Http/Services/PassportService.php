@@ -72,7 +72,7 @@ class PassportService extends BaseService{
          */
         $result_search = User::whereNull('deleted_at')
             ->where('email','=',self::convertText($request->email))
-            ->where('dni','=',self::convertText($request->dni))
+            ->orWhere('dni','=',self::convertText($request->dni))
             ->get()
             ->toArray();
         if(count($result_search)>0){
@@ -114,62 +114,6 @@ class PassportService extends BaseService{
         }
     }
 
-    /**
-     * @param $id
-     * @param Request $request
-     * @return \Illuminate\Http\JsonResponse|object|void
-     */
-    public function update($id, Request $request)
-    {
-        $array_image = []; $array_photo_mobile = [];
-        $array_update = [
-            'name' => self::convertText($request->name),
-            'code' => self::convertText($request->code),
-            'user_id' => $request->user_id,
-            'updated_at' => $this->getStoreNow(),
-        ];
-        
-        $result_search = User::whereNull('deleted_at')
-            ->where('id','=',$id)
-            ->get()
-            ->toArray();
-        if(count($result_search)<=0){
-            return $this->showMessage('Not Registered',404);
-        }else{
-            //  Realizar el Insert
-            $return = User::whereNull('deleted_at')
-                ->where('id','=',$id)
-                ->update($array_update);
-        }
-        if($return>0)
-            return $this->showMessage('Updated successfully',200);
-        else
-            return $this->showMessage('Error',500);
-    }
-
-    /**
-     * @param $id
-     * @return \Illuminate\Http\JsonResponse|object|void
-     */
-    public function destroy($id)
-    {
-        $array_save = [
-            'deleted_at' => $this->getStoreNow(),
-        ];
-        $list = User::whereNull('deleted_at')
-            ->where('id','=',$id)
-            ->get()
-            ->toArray()
-        ;
-        if(count($list)> 0){
-            $result = User::whereNull('deleted_at')->where('id','=',$id)->update($array_save);
-            return $result >0
-                ? $this->showMessage('Successfully Deleted',200)
-                : $this->showMessage('Error Deleted',500);
-        }else{
-            return $this->showMessage('Id Not Registered',404);
-        }
-    }
 
     /**
      * Metodo de Login
@@ -195,6 +139,7 @@ class PassportService extends BaseService{
         return response()->json([
             'access_token' => $tokenResult->accessToken,
             'token_type' => 'Bearer',
+            'id' => $user->id,
             'expires_at' => Carbon::parse(
                 $tokenResult->token->expires_at
             )->toDateTimeString()

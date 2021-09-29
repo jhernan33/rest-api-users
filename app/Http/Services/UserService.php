@@ -4,10 +4,13 @@
 namespace App\Http\Services;
 
 use App\Http\Services\BaseService;
+use App\Models\RolePermission;
 use App\Models\User;
 use App\Models\UserRole as ModelsUserRole;
+use DateTime;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use UserRole;
 
@@ -52,16 +55,13 @@ class UserService extends BaseService{
         try {
             $list = User::whereNull('deleted_at')
                 ->where('id','=',$id)
+                ->with('role')
                 ->get()
-                //->toArray()
             ;
             if(count($list)>0){
                 /**
                  * Buscar el Detalle de Rol y sus Permisos
                  */
-                foreach($list as &$value){
-                    $value->details = ModelsUserRole::whereNull('deleted_at')->with('roles')->get()->toArray();
-                }
                 return $list;
             }else{
                 return $this->showMessage('Not Registered',404);
@@ -115,30 +115,54 @@ class UserService extends BaseService{
      */
     public function update($id, Request $request)
     {
-        $array_image = []; $array_photo_mobile = [];
-        $array_update = [
-            'name' => self::convertText($request->name),
-            'code' => self::convertText($request->code),
-            'user_id' => $request->user_id,
-            'updated_at' => $this->getStoreNow(),
-        ];
-        
-        $result_search = User::whereNull('deleted_at')
-            ->where('id','=',$id)
-            ->get()
-            ->toArray();
-        if(count($result_search)<=0){
-            return $this->showMessage('Not Registered',404);
-        }else{
-            //  Realizar el Insert
-            $return = User::whereNull('deleted_at')
-                ->where('id','=',$id)
-                ->update($array_update);
+        $rol_id = 0;
+        /**
+         * Verificar el Rol del Usuario
+         */
+        $user = Auth::user()->id;
+        $rol = new User();
+        $rol_id = $rol->TipoRole($user);
+        // if($rol_id ==1){
+        //     /**
+        //      * Actualizar el Rol del user_id indicado
+        //      */
+        //     if($request->has('user_id') && isset($request->user_id)){
+        //         ModelsUserRole::whereNull('deleted_at')
+        //         ->where('user_id','=',$request->user_id)
+        //         ->update(['role_id' => $request->role_id]);
+        //     }
+            
+        // }
+
+        /**
+         * Delete Permissions of Role
+         */
+        try{
+            DB::beginTransaction();
+                RolePermission::whereNull('deleted_at')
+                ->where('role_id','=',$rol_id)
+                ->delete();
+
+                /**
+                 * Array of Permissions
+                 */
+                foreach($request->permission as $value){
+                    $array_save = [
+                        'role_id' => $rol_id,
+                        'permission_id' => $value['id'],
+                        'created_at' => $this->getStoreNow(),
+                    ];
+                    //dd($array_save);
+                    RolePermission::whereNull('deleted_at')
+                    ->where('role_id','=',$rol_id)
+                    ->insert($array_save);
+                }
+            DB::commit();
+        }catch (Exception $e){
+            DB::rollBack();
+            return self::showMessageObject('Error Not Registered',500,$e->getMessage());
         }
-        if($return>0)
-            return $this->showMessage('Updated successfully',200);
-        else
-            return $this->showMessage('Error',500);
+
     }
 
     /**

@@ -37,5 +37,9 @@ class PermissionSeeder extends Seeder
                     'created_at'=> new DateTime(),
                 ]);
         }
+        /**
+         * Actualizar la secuencia de la tabla
+         */
+        DB::select("select setval('permission_id_seq',5);");
     }
 }

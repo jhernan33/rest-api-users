@@ -281,5 +281,9 @@ class CountrySeeder extends Seeder
                     'created_at'=> new DateTime(),
                 ]);
         }
+        /**
+         * Actualizar la secuencia de la tabla
+         */
+        DB::select("select setval('country_id_seq',246);");
     }
 }

@@ -46,5 +46,9 @@ class RolePermissionSeeders extends Seeder
                     'created_at'=> new DateTime(),
                 ]);
         }
+        /**
+         * Actualizar la secuencia de la tabla
+         */
+        DB::select("select setval('role_permission_id_seq',10);");
     }
 }

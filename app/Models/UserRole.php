@@ -12,7 +12,10 @@ class UserRole extends Model
     protected $table = 'user_role';
     protected $hidden = ['created_at','updated_at','deleted_at'];
 
-    public function roles(){
-        return $this->hasOne(Role::class,'id','role_id');
+    /**
+     * Funcion para Buscar los permisos del Rol
+     */
+    public function permissions(){
+        return $this->hasMany(RolePermission::class,'role_id','role_id')->with('permission');
     }
 }

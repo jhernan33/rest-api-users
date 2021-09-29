@@ -53,4 +53,20 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
+
+    /**
+     * Search Role and Permissions
+     */
+    public function role(){
+        $obj = $this->hasMany(UserRole::class,'user_id','id')
+        ->join('role', 'role.id', '=', 'role_id')->with('permissions');
+        return $obj;
+    }
+
+    /**
+     * Funcion para buscar el tipo de Rol del Usuario
+     */
+    public function TipoRole($id){
+        return UserRole::where('user_id','=',$id)->select('role_id')->get()->toArray()[0]["role_id"];
+    }
 }
