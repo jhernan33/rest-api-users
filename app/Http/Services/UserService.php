@@ -122,17 +122,6 @@ class UserService extends BaseService{
         $user = Auth::user()->id;
         $rol = new User();
         $rol_id = $rol->TipoRole($user);
-        // if($rol_id ==1){
-        //     /**
-        //      * Actualizar el Rol del user_id indicado
-        //      */
-        //     if($request->has('user_id') && isset($request->user_id)){
-        //         ModelsUserRole::whereNull('deleted_at')
-        //         ->where('user_id','=',$request->user_id)
-        //         ->update(['role_id' => $request->role_id]);
-        //     }
-            
-        // }
 
         /**
          * Delete Permissions of Role
