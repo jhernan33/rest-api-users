@@ -1,6 +1,6 @@
 ## Laravel 8 REST API with Passport Authentication, Postgresql
 
-#### Step 1: Clone Project
+#### Step 1: Clonar el Proyecto
 
 ``git clone https://github.com/jhernan33/rest-api-users.git``  
 
